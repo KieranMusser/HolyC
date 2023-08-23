@@ -1,0 +1,16 @@
+type name ( type name = value, ... ) {}
+
+type name = expression;
+
+name += expression;
+
+name ++;
+
+if/while/else expression {}
+
+switch ()/[] {SWITCH BLOCK}
+
+name (name = expression, ...)
+
+
+
