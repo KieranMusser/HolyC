@@ -1,7 +1,10 @@
 /* Split NUM into INT and FLOAT? */
 typedef enum raw_TokenType {
-	NAME,NUM,STRING,TYPE,IF,WHILE
+	ERROR=256,NAME,NUM,STRING,TYPE,IF,WHILE
 } TokenType;
+#ifdef DBG
+char dbg_TokenTypeName[][7] = {"ERROR","NAME","NUM","STRING","TYPE","IF","WHILE"};
+#endif
 
 /* Avoid relying on "these" for holding all types? */
 typedef enum raw_DataType {
@@ -19,18 +22,11 @@ typedef union raw_TokenValue {
 	int number;
 } TokenValue;
 
-typedef struct raw_Context {
-	char *data;
-	int index;
-	TokenType lasttok;
-	FuncSig *funcs;
-} Context;
-
 typedef struct raw_FuncArg {
 	int has_default;
 	char *keyword;
 	DataType type;
-	int default;
+	int default_value;
 } FuncArg;
 
 typedef struct raw_FuncSig {
@@ -38,3 +34,11 @@ typedef struct raw_FuncSig {
 	int num_args;
 	FuncArg *args;
 } FuncSig;
+
+typedef struct raw_Context {
+	char *data;
+	int index;
+	TokenType lasttok;
+	FuncSig *funcs;
+} Context;
+

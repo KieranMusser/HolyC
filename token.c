@@ -79,6 +79,7 @@ next_sym(Context ctx, TokenType *ttype, TokenValue *tval) {
 	default:
 		*ttype = *ctx.data;
 	}
+	++ctx.data;
 	return ctx;
 }
 /*
@@ -97,8 +98,8 @@ next(Context ctx, TokenType *tokout, TokenValue *out) {
 	if (isdigit(*ctx.data)) {
 		printf("DIG\n");
 	} else if (isalpha(*ctx.data)) {
-		//next_name(ctx);
-		printf("ALP\n");
+		printf("TXT\n");
+		return next_name(ctx, tokout, out);
 	} else {
 		printf("SYM\n");
 		return next_sym(ctx, tokout, out);
