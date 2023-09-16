@@ -2,11 +2,16 @@
 typedef enum raw_TokenType {
 	ERROR=256,NAME,NUM,STRING,TYPE,IF,WHILE
 } TokenType;
-#ifdef DBG
-char dbg_TokenTypeName[][7] = {"ERROR","NAME","NUM","STRING","TYPE","IF","WHILE"};
-#endif
 
-/* Avoid relying on "these" for holding all types? */
+#ifdef DBG
+ char dbg_TokenTypeName[][7] = {"ERROR","NAME","NUM","STRING","TYPE","IF","WHILE"};
+#endif /* DBG */
+
+/* 
+ * Avoid relying on "these" for holding all types? 
+ * Switch to struct { int type; int indirection; } ?
+ */
+
 typedef enum raw_DataType {
 	U0,U8,I8,U16,I16,U32,I32,U64,I64,F64
 } DataType;
@@ -40,5 +45,6 @@ typedef struct raw_Context {
 	int index;
 	TokenType lasttok;
 	FuncSig *funcs;
+	int num_funcs;
 } Context;
 

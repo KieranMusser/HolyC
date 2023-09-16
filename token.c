@@ -24,6 +24,8 @@ pr_slice(Slice sl) {
  * -asm outputs assembly
  */
 
+
+
 Context
 skip_space(Context ctx) {
 	while (isspace(*ctx.data))
@@ -41,12 +43,14 @@ next_str(Context ctx, TokenType *tokout, TokenValue *out) {
 	if (tokout)
 		*tokout = STRING;
 	++ctx.data;
-	(out)->text.start = ctx.data;
+	if (out)
+		(out)->text.start = ctx.data;
 	while (*ctx.data && *ctx.data != '"') {
 		++ctx.data;
 		if (*ctx.data == '\\')
 			++ctx.data;
 	}
+	++ctx.data; /* advance beyond final quote */
 	if (out)
 		out->text.len = ctx.data - out->text.start;
 	return ctx;
@@ -54,18 +58,26 @@ next_str(Context ctx, TokenType *tokout, TokenValue *out) {
 
 Context
 next_name(Context ctx, TokenType *toktype, TokenValue *tokval) {
+	TokenValue ret_tokval;
 	ctx = skip_space(ctx);
 	assert((isalpha(*ctx.data) || *ctx.data == '_') && "Not valid name");
-	tokval->text.start = ctx.data;
+	ret_tokval.text.start = ctx.data;
 	while (isalnum(*ctx.data) || *ctx.data == '_')
 		++ctx.data;
-	tokval->text.len = ctx.data - tokval->text.start;
-	if (tokval->text.len == 2 && strncmp("if",tokval->text.start,tokval->text.len) == 0) {
-		*toktype = IF;
-	} else {
-		*toktype = NAME;
-	}
 
+	if (toktype == NULL && tokval == NULL)
+		return ctx;
+
+	ret_tokval.text.len = ctx.data - ret_tokval.text.start;
+	if (ret_tokval.text.len == 2 && strncmp("if",ret_tokval.text.start,ret_tokval.text.len) == 0) {
+		if (toktype)
+			*toktype = IF;
+	} else {
+		if (toktype)
+			*toktype = NAME;
+	}
+	if (tokval)
+		*tokval = ret_tokval;
 	return ctx;
 }
 
@@ -77,9 +89,26 @@ next_sym(Context ctx, TokenType *ttype, TokenValue *tval) {
 	case '"':
 		return next_str(ctx,ttype,tval);
 	default:
-		*ttype = *ctx.data;
+		if (ttype)
+			*ttype = *ctx.data;
 	}
 	++ctx.data;
+	return ctx;
+}
+Context
+next_number(Context ctx, TokenType *ttype, TokenValue *tval) {
+	int ret;
+	ret = 0;
+	while (isdigit(*ctx.data)) {
+		ret *= 10;
+		ret += *ctx.data - '0';
+		++ctx.data;
+	}
+	if (ttype)
+		*ttype = NUM;
+	if (tval)
+		tval->number = ret;
+
 	return ctx;
 }
 /*
@@ -94,9 +123,12 @@ next(Context ctx, TokenType *tokout, TokenValue *out) {
 	int i;
 	
 	i = 0;
-	while (*(ctx.data) == ' ') ++ctx.data;
+	while (*(ctx.data) == ' ')
+		++ctx.data;
+
 	if (isdigit(*ctx.data)) {
 		printf("DIG\n");
+		return next_number(ctx, tokout, out);
 	} else if (isalpha(*ctx.data)) {
 		printf("TXT\n");
 		return next_name(ctx, tokout, out);
@@ -104,6 +136,7 @@ next(Context ctx, TokenType *tokout, TokenValue *out) {
 		printf("SYM\n");
 		return next_sym(ctx, tokout, out);
 	}
+	assert(0 && "Unhandled token");
 }
 /*
  * Get type of upcoming token

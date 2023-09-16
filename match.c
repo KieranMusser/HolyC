@@ -31,6 +31,10 @@ asm_new_var(DataType type, Slice name) {
 
 }
 
+/*
+ * Handles string alone on line
+ */
+
 void
 match_print_str(Context ctx) {
 	
@@ -57,11 +61,11 @@ match_var_dec(Context ctx, TokenValue type) {
  * Parses function calls
  * name(a,b=c,)
  * 
-*/
+ */
 Context
-match_call(Context ctx) {
+match_call(Context ctx, int ** out_args, int * out_num_args) {
 	Context tmpctx;
-	TokenType ttype;
+	TokenType ttype, tmptype;
 	TokenValue tv_func, tval;
 	int num_args, i;
 	int *args; /* Note: this could fail if sizeof int != sizeof void* */
@@ -72,9 +76,13 @@ match_call(Context ctx) {
 	ctx = next(ctx, &ttype, NULL);
 	assert(ttype == '(' && "Invalid token");
 
+	assert(out_args != NULL && "INVALID OUT ARGS");
+	assert(out_num_args != NULL && "INVALID OUT N ARGS");
+
 	num_args = 0;
 	tmpctx = ctx;
 	while(1) {
+		printf("cur %s\n", tmpctx.data);
 		tmpctx = next(tmpctx, &ttype, NULL);
 		assert(ttype != '\0' && "EOF before finish call");
 	
@@ -86,17 +94,24 @@ match_call(Context ctx) {
 			break;
 		}
 	}
-	++num_args; /* num_arg counts ',' so it'll always be 0-1 short */
 _done_counting:
+
+	printf("num args %d\n", num_args);
+	++num_args; /* num_arg counts ',' so it'll always be 0-1 short */
+	args = malloc(sizeof(*args) * num_args);
+
 	for (i=0; i<num_args; ++i) {
 		ctx = next(ctx, &ttype, &tval);
-
-		/* Default argument */
-		if (ttype == ',') {
-			
+		printf("ttype first %d %c\n",ttype, ttype);
+		if (ttype == ',' || ttype == ')') {
+			args[i] = i;
+			continue;
 		/* Keyword argument */
 		} else if (peek(ctx) == '=') {
 			assert(ttype == NAME);
+			args[i] = tval.text.start[0] * 100 + i;
+			ctx = next(ctx, NULL, NULL); /* Consume = */
+			ctx = next(ctx, NULL, NULL); /* Temp consume */
 			/* Check against function signature */
 		/* Regular argument */
 		} else {
@@ -107,15 +122,18 @@ _done_counting:
 				break;
 			case STRING:
 				/* Store string */
-				args[i] = 0x0; /* String addr  */
+				args[i] = 0xC0FF; /* String addr  */
 				break;
 			}
 		}
-
+		/* Consume comma - not reached for default arg */
+		ctx = next(ctx, &ttype, NULL);
+		printf("ttype %d %c\n", ttype, ttype);
+		assert(ttype == ',' || ttype == ')' && "Bad arguments");
 	}
-	
-	
-
+	*out_args = args;
+	*out_num_args = num_args;
+	return ctx;
 }
 
 Context
@@ -136,7 +154,7 @@ match_statement(Context ctx) {
 		break;
 	/* Should handle type / var decl? */
 	case NAME: 
-		match_call(ctx);
+		/*match_call(ctx);*/
 		break;
 	case IF:
 		break;
