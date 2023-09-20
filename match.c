@@ -203,8 +203,12 @@ match_function(Context ctx, FuncSig *fsig) {
 	Slice name;
 	FuncArg arg;
 	
+
+	/* currently this function is not NULL safe */
+	assert(fsig != NULL);
+
 	/* type */
-	ctx = match_type(ctx, *(fsig->return_type));
+	ctx = match_type(ctx, &(fsig->return_type));
 
 	/* name */
 	ctx = next(ctx, &ttype, &tval);
@@ -242,7 +246,8 @@ match_function(Context ctx, FuncSig *fsig) {
 
 Context
 match_global(Context ctx) {
-	if (match_function(ctx).data == ctx.data) {
+	/* will always crash */
+	if (match_function(ctx, NULL).data == ctx.data) {
 		match_statement(ctx);
 	}	
 }

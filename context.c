@@ -1,3 +1,5 @@
+#include <stdlib.h>
+
 Context context_new(char *code_data) {
 	Context ctx;
 	ctx.data = code_data;
