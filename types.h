@@ -28,14 +28,15 @@ typedef union raw_TokenValue {
 } TokenValue;
 
 typedef struct raw_FuncArg {
-	int has_default;
 	char *keyword;
 	DataType type;
+	int has_default;
 	int default_value;
 } FuncArg;
 
 typedef struct raw_FuncSig {
 	char *name;
+	DataType return_type;
 	int num_args;
 	FuncArg *args;
 } FuncSig;
@@ -46,5 +47,6 @@ typedef struct raw_Context {
 	TokenType lasttok;
 	FuncSig *funcs;
 	int num_funcs;
+	int alloc_funcs;
 } Context;
 

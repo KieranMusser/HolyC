@@ -1,7 +1,7 @@
 #include "../holyc.c"
 
 
-char test_code[] = "print(\"Hello, world\",test=1,420,);\n";
+char test_code[] = "void print(char *string, int test, int other, int hm = 1) {}\nprint(\"Hello, world\",test=1,420,);\n";
 
 int main(int argc, char **argv) {
 	TokenValue tvalue;
@@ -15,6 +15,9 @@ int main(int argc, char **argv) {
 	int *args, num_args, i;
 
 	ttype = 0;
+	
+	ctx = match_function(ctx, &fsig);
+
 	ectx = match_call(ctx, &args, &num_args);
 	printf("matched %d\n", num_args);
 	for (i=0; i<num_args; ++i) {

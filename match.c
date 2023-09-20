@@ -14,9 +14,14 @@
  */
 
 
-int
-match_type() {
-	return 0;
+Context
+match_type(Context ctx, DataType *out_type) {
+	TokenType ttype;
+	TokenValue tval;
+	ctx = next(ctx, &ttype, &tval);
+	assert(ttype == TYPE);
+	*out_type = tval.type;
+	return ctx;
 
 }	
 
@@ -69,6 +74,8 @@ match_call(Context ctx, int ** out_args, int * out_num_args) {
 	TokenValue tv_func, tval;
 	int num_args, i;
 	int *args; /* Note: this could fail if sizeof int != sizeof void* */
+	FuncSig fsig;
+	fsig.name = NULL;
 
 	ctx = next(ctx, &ttype, &tv_func);
 	assert(ttype == NAME && "Invalid function name");
@@ -76,6 +83,8 @@ match_call(Context ctx, int ** out_args, int * out_num_args) {
 	ctx = next(ctx, &ttype, NULL);
 	assert(ttype == '(' && "Invalid token");
 
+
+	/* not strictly needed */
 	assert(out_args != NULL && "INVALID OUT ARGS");
 	assert(out_num_args != NULL && "INVALID OUT N ARGS");
 
@@ -96,6 +105,18 @@ match_call(Context ctx, int ** out_args, int * out_num_args) {
 	}
 _done_counting:
 
+
+	/* Check against sigs */
+	for (i=0; i<ctx.num_funcs; ++i) {
+		if (strncmp(ctx.funcs[i].name, tv_func.text.start, tv_func.text.len) == 0) {
+			fsig = ctx.funcs[i];
+			break;
+		}
+	}
+
+	/* fsig.name init to NULL, every real sig has name */
+	assert(fsig.name != NULL);
+
 	printf("num args %d\n", num_args);
 	++num_args; /* num_arg counts ',' so it'll always be 0-1 short */
 	args = malloc(sizeof(*args) * num_args);
@@ -103,15 +124,19 @@ _done_counting:
 	for (i=0; i<num_args; ++i) {
 		ctx = next(ctx, &ttype, &tval);
 		printf("ttype first %d %c\n",ttype, ttype);
+
+		/* Default args */
 		if (ttype == ',' || ttype == ')') {
-			args[i] = i;
+			assert(fsig.args[i].has_default);
+			args[i] = fsig.args[i].default_value;
 			continue;
 		/* Keyword argument */
 		} else if (peek(ctx) == '=') {
 			assert(ttype == NAME);
 			args[i] = tval.text.start[0] * 100 + i;
 			ctx = next(ctx, NULL, NULL); /* Consume = */
-			ctx = next(ctx, NULL, NULL); /* Temp consume */
+			ctx = next(ctx, &ttype, &tval); /* Temp consume */
+			
 			/* Check against function signature */
 		/* Regular argument */
 		} else {
@@ -131,8 +156,10 @@ _done_counting:
 		printf("ttype %d %c\n", ttype, ttype);
 		assert(ttype == ',' || ttype == ')' && "Bad arguments");
 	}
-	*out_args = args;
-	*out_num_args = num_args;
+	if (out_args)
+		*out_args = args;
+	if (out_num_args)
+		*out_num_args = num_args;
 	return ctx;
 }
 
@@ -166,14 +193,49 @@ match_statement(Context ctx) {
 	return ctx;
 }
 
+
+
+/* match function def */
 Context
-match_function(Context ctx) {
-  	int type;
+match_function(Context ctx, FuncSig *fsig) {
+	TokenType ttype;
+	TokenValue tval;
+	Slice name;
+	FuncArg arg;
+	
+	/* type */
+	ctx = match_type(ctx, *(fsig->return_type));
 
-	type = match_type();
-   
+	/* name */
+	ctx = next(ctx, &ttype, &tval);
+	assert(ttype == NAME);
+	name = tval.text;
+	fsig->name = malloc(sizeof(*(fsig->name)) * name.len);
+	strncpy(fsig->name, name.start, name.len);
+	/* (trash variable name) */
+	
+	ctx = next(ctx, &ttype, &tval);
+	assert(ttype == '(');
 
+	if (peek(ctx) == ')') {
+		fsig->num_args = 0;
+		fsig->args = NULL;
+		ctx = next(ctx,NULL,NULL);
+	} else {
+		ctx = match_type(ctx, &arg.type);
 
+		ctx = next(ctx, &ttype, &tval);
+		assert(ttype == NAME);
+		name = tval.text;
+		
+		arg.keyword = malloc(sizeof(*(fsig->name)) * name.len);
+		strncpy(arg.keyword, name.start, name.len);
+		
+		if (peek(ctx) == '=') {
+			/* handle default args */
+		}
+		
+	}
 
 	return ctx;
 }
