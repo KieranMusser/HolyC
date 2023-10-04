@@ -9,7 +9,6 @@
 #include <string.h>
 
 
-
 void
 pr_slice(Slice sl) {
 	printf("%.*s\n",sl.len,sl.start);
@@ -123,7 +122,7 @@ next(Context ctx, TokenType *tokout, TokenValue *out) {
 	int i;
 	
 	i = 0;
-	while (*(ctx.data) == ' ')
+	while (*ctx.data == ' ' || *ctx.data == '\n')
 		++ctx.data;
 
 	if (isdigit(*ctx.data)) {
@@ -138,6 +137,7 @@ next(Context ctx, TokenType *tokout, TokenValue *out) {
 	}
 	assert(0 && "Unhandled token");
 }
+
 /*
  * Get type of upcoming token
  */

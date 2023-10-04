@@ -15,6 +15,9 @@ typedef enum raw_TokenType {
 typedef enum raw_DataType {
 	U0,U8,I8,U16,I16,U32,I32,U64,I64,F64
 } DataType;
+char DataTypeNames[][4] = {
+	"U0","U8","I8","U16","I16","U32","I32","U64","I64","F64"
+};
 
 typedef struct raw_Slice {
 	char *start;
