@@ -13,4 +13,56 @@ switch ()/[] {SWITCH BLOCK}
 name (name = expression, ...)
 
 
+expression:
+a opr b (ie a + b)
+unary a (ie - b)
+a or b can be:
+ var
+ lit
+ (cast) var
+ * var
+ & var
+
+shunting yard
+(int) a * * b + & c
+
+push opr (int)
+push value (a)
+push solved (int) a
+push *
+push *
+push b
+
+
+
+
+handle string literals?
+handle expressions
+
+notes: pointer decay?
+
+should be 2 pass?
+
+Symbol Table
+holds:
+ - literal values
+ - variables in scope?
+
+func sigs
+
+Context match_x(Context, * SymbolTable, etc);
+
+Handle lit vals:
+ - keep all data as Values (slice, int, etc.)
+ - after match, commit to sym table
+
+ 1) maintains repeatability of match
+
+
+current:
+working on turning match_call into returning a usable set of output arguments
+- need to make sure it returns an array that can be used to pass args
+- requires that the keyword arguments are reordered and default values are inserted
+- currently arguments are quite broken
+
 

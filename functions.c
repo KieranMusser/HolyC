@@ -7,6 +7,8 @@
  * - owns args
  * - copies name
  * - muts ctx
+ *
+ * Does not handle realloc fails (assert)
  */
 int func_add(Context *ctx, Slice name, FuncArg *args, int num_args) {
 	/* Grow Funcs array, no graceful error */

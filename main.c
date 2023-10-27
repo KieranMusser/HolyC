@@ -1,3 +1,4 @@
+#define DBG
 #include "holyc.c"
 
 

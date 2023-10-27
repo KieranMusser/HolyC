@@ -1,4 +1,5 @@
 #include "types.h"
+#include "symbols.c"
 #include "context.c"
 #include "token.c"
 #include "match.c"

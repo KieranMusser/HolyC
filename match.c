@@ -19,6 +19,9 @@ match_type(Context ctx, DataType *out_type) {
 	TokenType ttype;
 	TokenValue tval;
 	int i;
+	
+	assert(out_type != NULL && "Not NULL safe");
+
 	ctx = next(ctx, &ttype, &tval);
 	assert(ttype == NAME);
 	for (i=0; i<sizeof(DataTypeNames) / sizeof(*DataTypeNames); ++i) {
@@ -46,7 +49,7 @@ match_expr(Context ctx, int *out) {
 	TokenType ttype;
 	
 
-
+	return ctx;
 }
 
 /* Take name + datatype and add instr to alloc */
@@ -78,18 +81,19 @@ match_var_dec(Context ctx) {
 	//asm_new_var(type.type, varname.text);
 	ctx = next(ctx,&tok,&tvalue);
 	if (tok == '=') {
-		match_var_set(ctx);
+		//match_var_set(ctx);
 	}
 	return ctx;
 }
-int extract_value(TokenValue tval, TokenType ttype) {
-	switch(ttype) {
+TokenValue extract_value(TokenValue tval, TokenType ttype) {
+	return tval;
+	/*switch(ttype) {
 	case NUM:
 		return tval.number;
 	case STRING:
 		return 0xC0FF;
 	}
-	return 420;
+	return 0xDEAD;*/
 }
 
 
@@ -100,12 +104,12 @@ int extract_value(TokenValue tval, TokenType ttype) {
  * 
  */
 Context
-match_call(Context ctx, int ** out_args, int * out_num_args) {
+match_call(Context ctx, TokenValue ** out_args, int * out_num_args) {
 	Context tmpctx;
 	TokenType ttype, tmptype;
 	TokenValue tv_func, tval;
 	int num_args, i;
-	int *args; /* Note: this could fail if sizeof int != sizeof void* */
+	TokenValue *args; /* Note: this could fail if sizeof int != sizeof void* */
 	FuncSig fsig;
 	fsig.name = NULL;
 
@@ -152,6 +156,9 @@ _done_counting:
 	/* fsig.name init to NULL, every real sig has name */
 	assert(fsig.name != NULL);
 
+	/* check simple case of too many arguments */
+	assert(num_args <= fsig.num_args);
+
 	printf("num args %d\n", num_args);
 	++num_args; /* num_arg counts ',' so it'll always be 0-1 short */
 	args = malloc(sizeof(*args) * num_args);
@@ -166,34 +173,44 @@ _done_counting:
 			args[i] = fsig.args[i].default_value;
 			continue;
 		/* Keyword argument */
+		/* NOTE: cannot handle out of order keywords */
 		} else if (peek(ctx) == '=') {
 			assert(ttype == NAME);
-			args[i] = tval.text.start[0] * 100 + i;
+			//args[i] = tval.text.start[0] * 100 + i;
 			ctx = next(ctx, NULL, NULL); /* Consume = */
 			ctx = next(ctx, &ttype, &tval); /* Temp consume */
-			args[i] = extract_value(tval, ttype);
+			args[i] = tval; //extract_value(tval, ttype);
 			
 			/* Check against function signature */
 		/* Regular argument */
 		} else {
+			args[i] = tval;
 			/* Doesn't check against func sig */
+			
+			/*
 			switch(ttype) {
 			case NUM:
 				args[i] = tval.number;
 				break;
 			case STRING:
-				/* Store string */
-				args[i] = 0xC0FF; /* String addr  */
+				/* Store string *  /
+				args[i].number = 0xC0FF; /* String addr  * /
 				break;
 			}
+			*/
 		}
 		/* Consume comma - not reached for default arg */
 		ctx = next(ctx, &ttype, NULL);
 		printf("ttype %d %c\n", ttype, ttype);
 		assert(ttype == ',' || ttype == ')' && "Bad arguments");
 	}
+
+
+	/* if out_args NULL, unneeded malloc-ing of args */
 	if (out_args)
 		*out_args = args;
+	else
+		free(args);
 	if (out_num_args)
 		*out_num_args = num_args;
 	return ctx;
@@ -229,7 +246,7 @@ match_statement(Context ctx) {
 	return ctx;
 }
 
-
+/* TODO: implement */
 Context
 match_body(Context ctx) {
 	TokenType ttype;
@@ -240,7 +257,9 @@ match_body(Context ctx) {
 	return ctx;
 }	
 
-/* match function def */
+/* match function def
+ * TODO: separate function signiture
+ */
 Context
 match_function(Context ctx, FuncSig *fsig) {
 	TokenType ttype;
@@ -250,9 +269,8 @@ match_function(Context ctx, FuncSig *fsig) {
 	Context tmpctx;
 	int num_args;
 	
-
 	/* currently this function is not NULL safe */
-	assert(fsig != NULL);
+	assert(fsig != NULL && "Not NULL safe");
 
 	/* type */
 	ctx = match_type(ctx, &(fsig->return_type));
@@ -263,11 +281,12 @@ match_function(Context ctx, FuncSig *fsig) {
 	name = tval.text;
 	fsig->name = malloc(sizeof(*(fsig->name)) * name.len);
 	strncpy(fsig->name, name.start, name.len);
+
 	/* (trash variable name) */
-	
 	ctx = next(ctx, &ttype, &tval);
 	assert(ttype == '(');
 
+	/* handle no arguments */
 	fsig->num_args = 0;
 	fsig->args = NULL;
 	if (peek(ctx) == ')') {

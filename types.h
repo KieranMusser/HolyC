@@ -26,15 +26,25 @@ typedef struct raw_Slice {
 
 typedef union raw_TokenValue {
 	Slice text;
-	DataType type;
 	int number;
 } TokenValue;
+
+typedef enum {
+	SYM_SLICE,
+	SYM_INT
+} SYM_TYPE;
+
+typedef union raw_Value {
+	Slice slice;
+	int num;
+} Value;
 
 typedef struct raw_FuncArg {
 	char *keyword;
 	DataType type;
 	int has_default;
-	int default_value;
+	SYM_TYPE dv_type;
+	TokenValue default_value;
 } FuncArg;
 
 typedef struct raw_FuncSig {
@@ -44,12 +54,29 @@ typedef struct raw_FuncSig {
 	FuncArg *args;
 } FuncSig;
 
+
+typedef struct raw_Symbol {
+	unsigned int hash;
+	SYM_TYPE type;
+	Value v;
+} Symbol;
+
+typedef struct raw_SymbolTable {
+	Symbol *start;
+	int len;
+	int alloc;
+} SymbolTable;
+
+
 typedef struct raw_Context {
 	char *data;
-	int index;
-	TokenType lasttok;
+//	int index;
+//	TokenType lasttok;
+
 	FuncSig *funcs;
 	int num_funcs;
 	int alloc_funcs;
+
+	SymbolTable symbols;
 } Context;
 
